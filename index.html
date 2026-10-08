@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAEHA LINKS | منصة اختصار الروابط وتوليد QR</title>
+    
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #0b0518; color: #f3e8ff; }
+        
+        .taeha-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at 20% 20%, rgba(147, 51, 234, 0.25), transparent 45%),
+                        radial-gradient(circle at 80% 80%, rgba(192, 38, 211, 0.2), transparent 45%), #0b0518;
+            z-index: -1;
+        }
+
+        .taeha-card {
+            background: rgba(24, 9, 43, 0.8); backdrop-filter: blur(16px);
+            border: 1px solid rgba(168, 85, 247, 0.3); box-shadow: 0 8px 32px 0 rgba(112, 26, 117, 0.3);
+        }
+
+        .taeha-input {
+            background: rgba(15, 5, 29, 0.9); border: 1px solid rgba(168, 85, 247, 0.35); color: #fff;
+        }
+        .taeha-input:focus { border-color: #c084fc; box-shadow: 0 0 15px rgba(192, 132, 252, 0.4); outline: none; }
+        .glow-purple { box-shadow: 0 0 25px rgba(168, 85, 247, 0.4); }
+        
+        /* ضبط ظهور كود الـ QR */
+        #qrcodeCanvas img, #qrcodeCanvas canvas {
+            margin: auto;
+            border-radius: 12px;
+            padding: 10px;
+            background: #fff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between pb-6 select-none relative">
+
+    <div class="taeha-bg"></div>
+
+    <!-- Header Navbar -->
+    <header class="w-full taeha-card sticky top-0 z-30 p-4 border-b border-purple-500/30">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-fuchsia-600 flex items-center justify-center text-white text-xl font-black glow-purple">
+                    <i class="fa-solid fa-link"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-xl text-white tracking-wider flex items-center gap-2">
+                        TAEHA <span class="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full">URL & QR</span>
+                    </h1>
+                    <p class="text-[10px] text-purple-300/70">منصة اختصار الروابط وصناعة كروت الـ QR</p>
+                </div>
+            </div>
+
+            <span class="text-xs font-bold bg-purple-900/50 text-purple-200 border border-purple-500/40 px-3 py-1.5 rounded-xl">
+                <i class="fa-solid fa-copyright text-purple-400 ml-1"></i> حقوق taeha
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl w-full mx-auto p-4 flex-1 space-y-6">
+
+        <!-- Shortener & QR Generator Form -->
+        <div class="taeha-card rounded-3xl p-6 space-y-5 border-purple-500/40 shadow-2xl">
+            <div class="text-center space-y-1">
+                <h2 class="text-2xl font-black text-white">اختصر رابطك وصمم كود QR احترافي</h2>
+                <p class="text-xs text-purple-300/80">ضع رابطك واستمتع باختصار سريع وكود QR جذاب بحقوق **taeha**</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-purple-300 block mb-1">الرابط الاصلي:</label>
+                    <div class="flex gap-2">
+                        <input type="url" id="originalUrl" placeholder="https://example.com/very-long-url..." class="w-full taeha-input rounded-xl px-4 py-3 text-xs">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-purple-300 block mb-1">اسم مستعار للرابط (اختياري):</label>
+                        <input type="text" id="customAlias" placeholder="مثلاً: my-facebook" class="w-full taeha-input rounded-xl px-3.5 py-2.5 text-xs">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-purple-300 block mb-1">لون كود الـ QR:</label>
+                        <input type="color" id="qrColor" value="#7e22ce" class="w-full h-10 taeha-input rounded-xl p-1 cursor-pointer">
+                    </div>
+                </div>
+
+                <button onclick="generateLinkAndQR()" class="w-full bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-black py-3.5 rounded-xl text-sm shadow-lg shadow-purple-600/40 transition flex items-center justify-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>توليد الرابط والـ QR الآن</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Section (Modal/Box) -->
+        <div id="resultBox" class="hidden taeha-card rounded-3xl p-6 space-y-5 border-fuchsia-500/50 glow-purple">
+            <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                <span class="text-xs font-bold text-fuchsia-300 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-400"></i> تم الانشاء بنجاح بحقوق taeha
+                </span>
+                <button onclick="closeResult()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <!-- Shortened Link Details -->
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-[11px] font-bold text-purple-300/80 block">الرابط المختصر:</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <input type="text" id="shortUrlOutput" readonly class="w-full taeha-input rounded-xl px-3 py-2 text-xs font-mono text-purple-200">
+                            <button onclick="copyShortUrl()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-2 rounded-xl text-xs shrink-0 flex items-center gap-1 transition">
+                                <i class="fa-solid fa-copy"></i> نسخ
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-purple-200/80 space-y-1 bg-purple-950/40 p-3 rounded-2xl border border-purple-500/20">
+                        <p><strong>تم الانشاء بواسطة:</strong> TAEHA Link Engine</p>
+                        <p><strong>الرابط الاصلي:</strong> <span id="originalUrlPreview" class="truncate block text-purple-400"></span></p>
+                    </div>
+                </div>
+
+                <!-- QR Display & Download -->
+                <div class="text-center space-y-3">
+                    <div id="qrcodeCanvas" class="flex justify-center items-center"></div>
+                    <button onclick="downloadQR()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-2 mx-auto shadow-md transition">
+                        <i class="fa-solid fa-download"></i> تحميل كود الـ QR
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Links Table -->
+        <div class="taeha-card rounded-3xl p-5 space-y-3 border-purple-500/20">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-purple-400"></i> سجل الروابط المختصرة
+                </h3>
+                <button onclick="clearHistory()" class="text-[11px] text-red-400 hover:text-red-300 font-bold">مسح السجل</button>
+            </div>
+
+            <div id="linksHistory" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <!-- Historical items will be inserted here -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer Copyrights -->
+    <footer class="w-full text-center text-xs text-purple-300/60 py-2">
+        <p>جميع الحقوق محفوظة © 2026 <strong>TAEHA LINKS</strong> | تم التطوير بواسطة taeha 🚀</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let qrCodeInstance = null;
+
+        window.addEventListener('DOMContentLoaded', loadHistory);
+
+        function generateLinkAndQR() {
+            const originalUrl = document.getElementById('originalUrl').value.trim();
+            const customAlias = document.getElementById('customAlias').value.trim();
+            const qrColor = document.getElementById('qrColor').value;
+
+            if (!originalUrl) {
+                alert('يرجى ادخال الرابط الأصلي أولاً!');
+                return;
+            }
+
+            // توليد رمز فريد بحقوق taeha
+            const randomCode = customAlias ? customAlias.replace(/\s+/g, '-') : 'taeha-' + Math.random().toString(36).substring(2, 7);
+            const shortUrl = `${window.location.origin}/#${randomCode}`;
+
+            // إظهار ناتج الرابط
+            document.getElementById('shortUrlOutput').value = shortUrl;
+            document.getElementById('originalUrlPreview').innerText = originalUrl;
+
+            // توليد الـ QR Code
+            const qrContainer = document.getElementById('qrcodeCanvas');
+            qrContainer.innerHTML = '';
+
+            qrCodeInstance = new QRCode(qrContainer, {
+                text: originalUrl,
+                width: 140,
+                height: 140,
+                colorDark: qrColor,
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // إظهار واجهة النتيجة
+            document.getElementById('resultBox').classList.remove('hidden');
+
+            // حفظ في السجل المحلي
+            saveToHistory({
+                alias: randomCode,
+                shortUrl: shortUrl,
+                originalUrl: originalUrl,
+                date: new Date().toLocaleDateString('ar-EG')
+            });
+
+            document.getElementById('originalUrl').value = '';
+            document.getElementById('customAlias').value = '';
+        }
+
+        function copyShortUrl() {
+            const copyText = document.getElementById('shortUrlOutput');
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            alert('تم نسخ الرابط المختصر بحقوق taeha! 📋');
+        }
+
+        function downloadQR() {
+            const img = document.querySelector('#qrcodeCanvas img');
+            const canvas = document.querySelector('#qrcodeCanvas canvas');
+
+            let src = '';
+            if (img && img.src) src = img.src;
+            else if (canvas) src = canvas.toDataURL('image/png');
+
+            if (!src) return alert('تعذر استخراج صورة الـ QR');
+
+            const link = document.createElement('a');
+            link.href = src;
+            link.download = `taeha-qr-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function closeResult() {
+            document.getElementById('resultBox').classList.add('hidden');
+        }
+
+        function saveToHistory(item) {
+            let history = JSON.parse(localStorage.getItem('taeha_links') || '[]');
+            history.unshift(item);
+            localStorage.setItem('taeha_links', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            let history = JSON.parse(localStorage.getItem('taeha_links') || '[]');
+            const historyContainer = document.getElementById('linksHistory');
+
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<p class="text-xs text-purple-300/50 text-center py-3">لا توجد روابط مختصرة سابقة.</p>';
+                return;
+            }
+
+            historyContainer.innerHTML = history.map(item => `
+                <div class="taeha-card p-3 rounded-2xl flex items-center justify-between text-xs border-purple-500/20">
+                    <div class="space-y-0.5 truncate max-w-[70%]">
+                        <span class="font-bold text-white block truncate">${item.shortUrl}</span>
+                        <span class="text-[10px] text-purple-300/70 truncate block">${item.originalUrl}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="navigator.clipboard.writeText('${item.shortUrl}'); alert('تم النسخ!');" class="bg-purple-600/30 hover:bg-purple-600 text-purple-200 px-2.5 py-1 rounded-xl text-[11px] font-bold border border-purple-500/30">
+                            نسخ
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            if (confirm('هل أنت تأكد من مسح جميع الروابط من السجل؟')) {
+                localStorage.removeItem('taeha_links');
+                loadHistory();
+            }
+        }
+    </script>
+</body>
+</html>
